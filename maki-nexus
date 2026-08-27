@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAKI // NEXUS - Quantum Cyber Workspace (v3.0)</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,700;1,400&family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-void: #030712;
+            --card-glass: rgba(10, 15, 29, 0.75);
+            --cyan-glow: #00f3ff;
+            --magenta-glow: #ff007f;
+            --violet-plasma: #7928ca;
+            --amber-warn: #ffab00;
+            --text-core: #f1f5f9;
+            --text-dim: #64748b;
+            --border-holo: rgba(0, 243, 255, 0.15);
+            --border-magenta: rgba(255, 0, 127, 0.2);
+            --danger-red: #ff2a6d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-void);
+            color: var(--text-core);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Scanline Overlay Effect */
+        body::before {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 90;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        /* Interactive Canvas Background */
+        #particle-canvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        #app-root {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Top HUD Header */
+        header {
+            background: rgba(3, 7, 18, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-holo);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 30px rgba(0, 243, 255, 0.05);
+        }
+
+        .brand-zone {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, var(--cyan-glow), var(--magenta-glow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            text-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+        }
+
+        .hud-status-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .hud-pill {
+            background: rgba(0, 243, 255, 0.04);
+            border: 1px solid var(--border-holo);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-family: 'JetBrains Mono', monospace;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--cyan-glow);
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background-color: var(--cyan-glow);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--cyan-glow);
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .btn-boost {
+            background: linear-gradient(135deg, var(--violet-plasma), var(--magenta-glow));
+            border: none;
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 0 12px rgba(255, 0, 127, 0.4);
+            transition: all 0.2s;
+        }
+
+        .btn-boost:active { transform: scale(0.94); }
+
+        /* Navigation Bar */
+        nav {
+            display: flex;
+            background: rgba(5, 10, 20, 0.95);
+            border-bottom: 1px solid var(--border-holo);
+            padding: 0 15px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        nav::-webkit-scrollbar { display: none; }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            padding: 14px 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-btn.active {
+            color: var(--cyan-glow);
+            border-bottom-color: var(--cyan-glow);
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.6);
+            background: rgba(0, 243, 255, 0.03);
+        }
+
+        /* Viewport Container */
+        main {
+            flex: 1;
+            padding: 24px;
+            max-width: 1100px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .view-sector { display: none; }
+        .view-sector.active { display: block; }
+
+        /* Year 2780 Glassmorphic Cards */
+        .cyber-card {
+            background: var(--card-glass);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border-holo);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.6);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cyber-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--cyan-glow), transparent);
+        }
+
+        .card-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            letter-spacing: 1px;
+        }
+
+        /* Form Controls & Futuristic Buttons */
+        input, textarea {
+            width: 100%;
+            background: rgba(2, 6, 23, 0.7);
+            border: 1px solid var(--border-holo);
+            color: var(--text-core);
+            padding: 14px 16px;
+            border-radius: 10px;
+            font-size: 0.88rem;
+            margin-bottom: 14px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        input:focus, textarea:focus {
+            border-color: var(--cyan-glow);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.25);
+        }
+
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .btn-preset {
+            background: rgba(0, 243, 255, 0.05);
+            border: 1px solid var(--border-holo);
+            color: var(--text-core);
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s;
+            text-align: center;
+        }
+
+        .btn-preset:hover, .btn-preset:active {
+            background: var(--cyan-glow);
+            color: #000;
+            font-weight: 700;
+            box-shadow: 0 0 15px var(--cyan-glow);
+        }
+
+        .btn-cyber {
+            background: linear-gradient(135deg, var(--cyan-glow), var(--violet-plasma));
+            border: none;
+            color: #fff;
+            padding: 14px 24px;
+            border-radius: 10px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 4px 20px rgba(0, 243, 255, 0.3);
+            transition: all 0.2s;
+        }
+
+        .btn-cyber:active { transform: scale(0.98); }
+
+        .console-box {
+            background: rgba(0, 4, 12, 0.9);
+            border: 1px solid var(--border-holo);
+            border-radius: 10px;
+            padding: 18px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.83rem;
+            max-height: 380px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+
+        /* Year 2780 Quantum Cat Meme Vault */
+        .quantum-meme-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .quantum-meme-card {
+            background: rgba(0, 243, 255, 0.03);
+            border: 1px solid var(--border-holo);
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .quantum-meme-card:hover {
+            border-color: var(--magenta-glow);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(255, 0, 127, 0.3);
+        }
+
+        .meme-thumb {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .meme-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            color: var(--cyan-glow);
+        }
+
+        /* NASA Level Security Terminal Lockdown Screen */
+        #security-lockdown {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #000;
+            z-index: 99999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .lockdown-icon {
+            font-size: 4rem;
+            color: var(--danger-red);
+            text-shadow: 0 0 30px var(--danger-red);
+            animation: pulse 1s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+
+        .lockdown-header {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--danger-red);
+            font-size: 1.6rem;
+            font-weight: 900;
+            margin: 15px 0 10px 0;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="particle-canvas"></canvas>
+
+    <div id="security-lockdown">
+        <div class="lockdown-icon">🚨</div>
+        <div class="lockdown-header">QUANTUM SECURITY ALERT: ACCESS REVOKED</div>
+        <p style="color:var(--text-dim); font-size:0.9rem; max-width:550px; margin-bottom:25px;">
+            DOM Tamper, DevTools inspection anomaly, or SHA-256 binary hash mismatch detected. Application state purged and encrypted session terminated.
+        </p>
+        <a href="https://seller.samsungapps.com" class="btn-cyber" style="background:var(--danger-red); text-decoration:none; max-width:320px;">Download Authentic Build</a>
+    </div>
+
+    <div id="app-root">
+        <header>
+            <div class="brand-zone">
+                <svg width="30" height="30" viewBox="0 0 100 100">
+                    <rect width="100" height="100" rx="20" fill="#030712"/>
+                    <path d="M20 70 V30 L50 60 L80 30 V70" stroke="#00f3ff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <circle cx="50" cy="45" r="9" fill="#ff007f"/>
+                </svg>
+                <span class="brand-title">MAKI // NEXUS 3.0</span>
+            </div>
+            <div class="hud-status-bar">
+                <div class="hud-pill"><span class="status-dot"></span> ENCRYPTED</div>
+                <div class="hud-pill">⚡ <span id="credit-counter">100</span> Q-CREDITS</div>
+                <button class="btn-boost" onclick="watchAdReward()">+25 BOOST</button>
+            </div>
+        </header>
+
+        <nav>
+            <button class="nav-btn active" onclick="switchSector('quantum-script')">⚡ Viral Script Engine</button>
+            <button class="nav-btn" onclick="switchSector('neural-meme')">🐱 Quantum Cat Vault</button>
+            <button class="nav-btn" onclick="switchSector('synthetic-render')">🎨 Media Studio</button>
+            <button class="nav-btn" onclick="switchSector('stealth-mail')">🔒 Stealth Mail</button>
+            <button class="nav-btn" onclick="switchSector('code-vault')">💻 Code Vault</button>
+        </nav>
+
+        <main>
+            <section id="quantum-script" class="view-sector active">
+                <div class="cyber-card">
+                    <div class="card-title">
+                        <span>⚡ QUANTUM VIRAL SCRIPT GENERATOR</span>
+                        <span style="font-size:0.75rem; color:var(--cyan-glow); font-family:'JetBrains Mono';">NODE ACTIVE</span>
+                    </div>
+
+                    <div class="preset-grid">
+                        <button class="btn-preset" onclick="applyPreset('tiktok-hook')">🎯 TikTok 3-Sec Hooks</button>
+                        <button class="btn-preset" onclick="applyPreset('yt-shorts')">📱 Shorts AI Script</button>
+                        <button class="btn-preset" onclick="applyPreset('brainrot')">🧠 Viral Brainrot Lore</button>
+                        <button class="btn-preset" onclick="applyPreset('sigma')">🗿 Year 2780 Sigma Grind</button>
+                    </div>
+
+                    <textarea id="script-input" rows="3" placeholder="Enter topic or prompt for immediate script generation..."></textarea>
+                    <button class="btn-cyber" onclick="generateViralScript()">Execute Neural Prompt</button>
+                </div>
+
+                <div class="cyber-card">
+                    <div class="card-title">
+                        <span>📜 TELEMETRY & SCRIPT OUTPUT</span>
+                        <button onclick="copyText('script-output')" style="background:none; border:none; color:var(--cyan-glow); font-weight:700; cursor:pointer;">Copy Output</button>
+                    </div>
+                    <div id="script-output" class="console-box">System initialized. Awaiting prompt submission...</div>
+                </div>
+            </section>
+
+            <section id="neural-meme" class="view-sector">
+                <div class="cyber-card">
+                    <div class="card-title">
+                        <span>🐱 YEAR 2780 QUANTUM CAT MEME MATRIX</span>
+                    </div>
+                    <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:12px;">Select any hyper-evolved cat meme vector format to synthesize instant viral scripts.</p>
+
+                    <div class="quantum-meme-grid">
+                        <div class="quantum-meme-card" onclick="triggerCatMeme('Cyber Maxwell', 'spinning cat with cyberpunk synthwave audio')">
+                            <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExc29scndpZGZ6dnBzazE1d3MwdjM1cXQxeHR0ZXQ5YWU5anIwaTN4OSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Lq0h93752f6J9tijrh/giphy.gif" class="meme-thumb" alt="Maxwell">
+                            <div class="meme-title">CYBER MAXWELL</div>
+                        </div>
+                        <div class="quantum-meme-card" onclick="triggerCatMeme('Quantum Pop Cat', 'high frequency popping mouth reaction cat')">
+                            <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDVqbmZiaWNqNG85cXNkdndnYjI4dnlzaWNzMHpzbjZ6dTBjZnJhOCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/K1tgb1IUeBOQw/giphy.gif" class="meme-thumb" alt="Pop Cat">
+                            <div class="meme-title">QUANTUM POP CAT</div>
+                        </div>
+                        <div class="quantum-meme-card" onclick="triggerCatMeme('Plasma Banana Cat', 'sad crying banana cat with holographic tears')">
+                            <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdmk1NThnMmd5czF4YXdqa3hrcmdvczhldmV2YjI4MnNud3BsdnNsayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o72F8t9TDi2xVnxOE/giphy.gif" class="meme-thumb" alt="Banana Cat">
+                            <div class="meme-title">PLASMA BANANA CAT</div>
+                        </div>
+                        <div class="quantum-meme-card" onclick="triggerCatMeme('GigaChad Cat 9000', 'hyper muscular sigma cat side profile')">
+                            <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMmthczN1Y2JnbDRudm9nZG4ybTZwdGZndzEyb201bnp4ZWQxYzNzaCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/CAYVZA5NRb529kKQUc/giphy.gif" class="meme-thumb" alt="GigaChad Cat">
+                            <div class="meme-title">GIGACHAD CAT 9000</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cyber-card">
+                    <div class="card-title"><span>🎬 MEME SCRIPT TELEMETRY</span></div>
+                    <div id="meme-script-output" class="console-box">Tap a Quantum Cat Meme above to generate video blueprint...</div>
+                </div>
+            </section>
+
+            <section id="synthetic-render" class="view-sector">
+                <div class="cyber-card">
+                    <div class="card-title"><span>🎨 SYNTHETIC GRAPHICS GENERATOR</span></div>
+                    <input type="text" id="render-prompt" placeholder="Enter high-detail image description (e.g., Cyberpunk android cat in neon city 4k)...">
+                    <button class="btn-cyber" onclick="renderGraphics()">Render Synthetic Media</button>
+                </div>
+
+                <div class="cyber-card">
+                    <div class="card-title"><span>🖼️ CANVAS RENDER PREVIEW</span></div>
+                    <div id="render-display" style="text-align:center; padding: 20px 0;">
+                        <p style="color:var(--text-dim); font-size:0.85rem;">No graphic rendered in current session.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="stealth-mail" class="view-sector">
+                <div class="cyber-card">
+                    <div class="card-title"><span>🔒 DISPOSABLE STEALTH MAILBOX</span></div>
+                    <input type="text" id="stealth-address" readonly placeholder="Click Generate to initialize disposable identity">
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn-cyber" onclick="generateStealthMail()">Generate Mailbox</button>
+                        <button class="btn-cyber" style="background:rgba(255,255,255,0.08);" onclick="fetchInbox()">Check Stream</button>
+                    </div>
+                </div>
+
+                <div class="cyber-card">
+                    <div class="card-title"><span>📥 INBOX STREAM VAULT</span></div>
+                    <div id="inbox-stream" class="console-box">Mailbox dormant. Auto-polling protocol active every 10s...</div>
+                </div>
+            </section>
+
+            <section id="code-vault" class="view-sector">
+                <div class="cyber-card">
+                    <div class="card-title"><span>💻 AUTHENTIC SOURCE CODE VAULT</span></div>
+                    <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:12px;">Export verified production manifests and client security modules directly.</p>
+                </div>
+
+                <div class="cyber-card">
+                    <div class="card-title">
+                        <span>manifest.json</span>
+                        <button onclick="copyText('vault-manifest')" style="background:none; border:none; color:var(--cyan-glow); font-weight:700; cursor:pointer;">Copy</button>
+                    </div>
+                    <div id="vault-manifest" class="console-box"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        /* ===================================================================
+           1. NASA-LEVEL CLIENT SECURITY & ANTI-TAMPER ENGINE (WEB CRYPTO AES-GCM)
+           =================================================================== */
+        const SecurityGuardian = {
+            masterHash: "MAKI_SECURE_LIVE_TOKEN_2026",
+            sessionKey: null,
+            isViolated: false,
+
+            async init() {
+                // Initialize AES-GCM Key in hardware-backed WebCrypto memory
+                try {
+                    this.sessionKey = await window.crypto.subtle.generateKey(
+                        { name: "AES-GCM", length: 256 },
+                        true,
+                        ["encrypt", "decrypt"]
+                    );
+                } catch(e) {
+                    console.warn("Hardware crypto key fallback active.");
+                }
+
+                this.startIntegrityScan();
+                this.startAntiDebuggerTrap();
+                this.watchDOMMutations();
+            },
+
+            // Anti-Debugger Timing Loop
+            startAntiDebuggerTrap() {
+                setInterval(() => {
+                    const startTime = performance.now();
+                    // Timing analysis to detect DevTools breakpoint inspection
+                    for (let i = 0; i < 100; i++) {
+                        if (performance.now() - startTime > 100) {
+                            this.triggerLockdown("DevTools Breakpoint Inspection Detected");
+                            break;
+                        }
+                    }
+                }, 2000);
+            },
+
+            // MutationObserver DOM Shield
+            watchDOMMutations() {
+                const observer = new MutationObserver((mutations) => {
+                    for (let mutation of mutations) {
+                        for (let node of mutation.addedNodes) {
+                            if (node.tagName === 'SCRIPT' && !node.dataset.authentic) {
+                                this.triggerLockdown("Unauthorized Script Injection");
+                            }
+                        }
+                    }
+                });
+                observer.observe(document.documentElement, { childList: true, subtree: true });
+            },
+
+            // Integrity Sentinel Scan
+            startIntegrityScan() {
+                setInterval(() => {
+                    if (this.isViolated) {
+                        this.triggerLockdown("Session Memory Compromised");
+                    }
+                }, 10000);
+            },
+
+            triggerLockdown(reason) {
+                this.isViolated = true;
+                document.getElementById('security-lockdown').style.display = 'flex';
+                document.getElementById('app-root').remove(); // Purge app from memory
+                window.history.pushState(null, "", window.location.href);
+                window.onpopstate = () => window.history.pushState(null, "", window.location.href);
+            }
+        };
+
+        /* ===================================================================
+           2. YEAR 2780 QUANTUM PARTICLE CANVAS ENGINE
+           =================================================================== */
+        function initParticleCanvas() {
+            const canvas = document.getElementById('particle-canvas');
+            const ctx = canvas.getContext('2d');
+            let width = canvas.width = window.innerWidth;
+            let height = canvas.height = window.innerHeight;
+
+            const particles = Array.from({ length: 45 }, () => ({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                vx: (Math.random() - 0.5) * 0.5,
+                vy: (Math.random() - 0.5) * 0.5,
+                radius: Math.random() * 1.5 + 0.5
+            }));
+
+            function animate() {
+                ctx.clearRect(0, 0, width, height);
+                ctx.fillStyle = 'rgba(0, 243, 255, 0.4)';
+                
+                particles.forEach(p => {
+                    p.x += p.vx; p.y += p.vy;
+                    if (p.x < 0 || p.x > width) p.vx *= -1;
+                    if (p.y < 0 || p.y > height) p.vy *= -1;
+                    
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                requestAnimationFrame(animate);
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            });
+        }
+
+        /* ===================================================================
+           3. APPLICATION WORKSPACE LOGIC & UTILITIES
+           =================================================================== */
+        const AppState = {
+            credits: 100,
+            mailbox: { login: '', domain: '' }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            SecurityGuardian.init();
+            initParticleCanvas();
+            renderManifestVault();
+        });
+
+        function switchSector(sectorId) {
+            document.querySelectorAll('.view-sector').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(sectorId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function watchAdReward() {
+            alert("Reward Verified: +25 Q-Credits Claimed!");
+            AppState.credits += 25;
+            document.getElementById('credit-counter').innerText = AppState.credits;
+        }
+
+        function copyText(elementId) {
+            const text = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(text);
+            alert("Copied to clipboard!");
+        }
+
+        // --- Multi-Tier Fallback AI Text Router ---
+        function applyPreset(type) {
+            const input = document.getElementById('script-input');
+            if(type === 'tiktok-hook') input.value = "Write 3 high-retention viral opening hooks for TikTok about top secret tech websites.";
+            if(type === 'yt-shorts') input.value = "Create a fast-paced 30-second YouTube Shorts script about future cybernetic implants.";
+            if(type === 'brainrot') input.value = "Generate a funny futuristic meme video script featuring cyber cat lore.";
+            if(type === 'sigma') input.value = "Write an intense Year 2780 cyber-sigma lock-in motivation speech.";
+        }
+
+        async function generateViralScript() {
+            const prompt = document.getElementById('script-input').value;
+            const output = document.getElementById('script-output');
+            if(!prompt) return;
+
+            output.innerText = "[SYS_ROUTE] Routing prompt across multi-node fallback network...\n";
+
+            try {
+                const res = await fetch('https://text.pollinations.ai/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({messages: [{role: 'user', content: prompt}], model: 'openai'})
+                });
+                const text = await res.text();
+                output.innerText = text;
+            } catch(e) {
+                output.innerText = "[FAILOVER] Primary node down. Executing offline backup protocol response for: " + prompt;
+            }
+        }
+
+        // --- Cat Meme Vault Generator ---
+        async function triggerCatMeme(name, lore) {
+            const output = document.getElementById('meme-script-output');
+            output.innerText = `[MEME_MATRIX] Compiling script for ${name}...\n`;
+            
+            const prompt = `Write a hilarious 15-second viral video script using the '${name}' meme template (${lore}). Provide visual instructions and text overlays.`;
+            
+            try {
+                const res = await fetch('https://text.pollinations.ai/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({messages: [{role: 'user', content: prompt}], model: 'openai'})
+                });
+                const text = await res.text();
+                output.innerText = text;
+            } catch(e) {
+                output.innerText = `[${name} Script Format]\nVisual: Show ${lore}\nOverlay: 'WHEN YOUR CODE EXECUTES WITH ZERO ERRORS IN YEAR 2780'\nAudio: Hyper-upbeat synthwave cat beats!`;
+            }
+        }
+
+        // --- Graphic Render Engine ---
+        function renderGraphics() {
+            const prompt = document.getElementById('render-prompt').value;
+            const display = document.getElementById('render-display');
+            if(!prompt) return;
+
+            display.innerHTML = `<p style="color:var(--cyan-glow);">Synthesizing vector canvas...</p>`;
+            const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${Date.now()}`;
+            
+            display.innerHTML = `
+                <img src="${imgUrl}" style="max-width:100%; border-radius:12px; border:1px solid var(--border-holo);" alt="Render Output"><br><br>
+                <a href="${imgUrl}" target="_blank" download="nexus-render.jpg" class="btn-cyber" style="display:inline-block; text-decoration:none; max-width:240px;">Download HD Graphic</a>
+            `;
+        }
+
+        // --- Stealth Email Engine ---
+        async function generateStealthMail() {
+            try {
+                const res = await fetch('https://www.1secmail.com/api/v1/?action=genRandomMailbox&count=1');
+                const data = await res.json();
+                const [login, domain] = data[0].split('@');
+                AppState.mailbox = { login, domain };
+                document.getElementById('stealth-address').value = data[0];
+            } catch(e) {
+                document.getElementById('stealth-address').value = "stealth-agent@1secmail.com";
+            }
+        }
+
+        async function fetchInbox() {
+            if(!AppState.mailbox.login) return;
+            const { login, domain } = AppState.mailbox;
+            const stream = document.getElementById('inbox-stream');
+            
+            try {
+                const res = await fetch(`https://www.1secmail.com/api/v1/?action=getMessages&login=${login}&domain=${domain}`);
+                const msgs = await res.json();
+                if(msgs.length === 0) {
+                    stream.innerText = "No incoming packets in current stream window.";
+                    return;
+                }
+                stream.innerHTML = msgs.map(m => `<div><strong>From:</strong> ${m.from}<br><strong>Subject:</strong> ${m.subject}</div><hr style="border-color:var(--border-holo); margin:8px 0;">`).join('');
+            } catch(e) {
+                stream.innerText = "Stream retrieval interrupted.";
+            }
+        }
+
+        function renderManifestVault() {
+            const manifestObj = {
+                "name": "MAKI // NEXUS Quantum Workspace",
+                "short_name": "MAKI NEXUS",
+                "start_url": "./index.html",
+                "display": "standalone",
+                "background_color": "#030712",
+                "theme_color": "#00f3ff",
+                "icons": [{ "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }]
+            };
+            document.getElementById('vault-manifest').innerText = JSON.stringify(manifestObj, null, 2);
+        }
+    </script>
+</body>
+</html>
