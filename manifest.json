@@ -1,0 +1,41 @@
+{
+  "name": "MAKI // NEXUS Cyber Workspace",
+  "short_name": "MAKI NEXUS",
+  "description": "Next-generation quantum workspace for viral script analysis, cat meme generation, stealth identity email, and synthetic graphics render engine.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#030712",
+  "theme_color": "#00f3ff",
+  "categories": ["productivity", "utilities", "entertainment"],
+  "icons": [
+    {
+      "src": "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExc29scndpZGZ6dnBzazE1d3MwdjM1cXQxeHR0ZXQ5YWU5anIwaTN4OSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Lq0h93752f6J9tijrh/giphy.gif",
+      "sizes": "192x192",
+      "type": "image/gif",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExc29scndpZGZ6dnBzazE1d3MwdjM1cXQxeHR0ZXQ5YWU5anIwaTN4OSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Lq0h93752f6J9tijrh/giphy.gif",
+      "sizes": "512x512",
+      "type": "image/gif",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80",
+      "sizes": "800x600",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "MAKI NEXUS Cyberpunk Workspace Interface"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80",
+      "sizes": "800x600",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Meme Studio and Viral Script Engine"
+    }
+  ]
+}
